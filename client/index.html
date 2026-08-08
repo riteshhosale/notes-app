@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./src/index.css" />
+    <title>notes-app</title>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>TypeScript Notes App</h1>
+      <div class="form">
+        <div class="toolbar">
+          <input type="text" id="search" placeholder="Search notes..." />
+          <select id="category">
+            <option value="Personal">Personal</option>
+            <option value="Study">Study</option>
+            <option value="Work">Work</option>
+            <option value="Ideas">Ideas</option>
+          </select>
+          <input type="color" id="color" value="#fff59d" />
+          <button id="themeBtn">🌙</button>
+          <button id="exportBtn">Export</button>
+          <button id="importBtn">Import</button>
+          <input type="file" id="fileInput" accept=".json" hidden />
+          <div id="toast"></div>
+          <button id="pdfBtn">Export as PDF</button>
+          <button id="pngBtn">Export as PNG</button>
+          <button id="previewBtn">Preview</button>
+          <div id="stats"></div>
+          <div id="preview"></div>
+        </div>
+        <input id="title" placeholder="Title" />
+        <textarea id="description" placeholder="Description"></textarea>
+        <button id="addBtn">Add Note</button>
+      </div>
+      <div id="notes" class="notes-grid"></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

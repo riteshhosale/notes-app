@@ -1,0 +1,174 @@
+*  {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body  {
+    background: #f4f4f4;
+}
+
+.container  {
+    width: 90%;
+    max-width: 900px;
+    margin: 40px auto;
+}
+
+h1  {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.form  {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+input, textarea {
+    padding: 12px;
+    font-size: 16px;
+}
+
+textarea  {
+    resize: none;
+    height: 120px;
+}
+
+button  {
+    padding: 12px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover  {
+    background: #1d4ed8;
+}
+
+.notes-gird  {
+    margin-top: 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.card  {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.card h2  {
+    margin-bottom: 10px;
+}
+
+.actions  {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.edit  {
+    background: #2563eb;
+    color: white;
+}
+
+.delete  {
+    background: #dc2626;
+    color: white;
+}
+
+small  {
+    display: block;
+    margin-top: 10px;
+    color: #777;
+}
+
+.toolbar  {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.toolbar input,
+.toolbar select,
+.toolbar button  {
+    padding: 10px;
+}
+
+.dark  {
+    background: #111827;
+    color: white;
+}
+
+.dark .card  {
+    color: #111;
+}
+
+#themeBtn  {
+    cursor: pointer;
+}
+
+#toast  {
+    position: fixed;
+    bottom: 20px;
+    right: 25px;
+    background: #2563eb;
+    color: white;
+    padding: 14px 20px;
+    border-radius: 8px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition:all 0.3s ease-in-out;
+}
+
+#toast.show  {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.card  {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#exportBtn  {
+    background: #ea580c;
+    color: white;
+}
+
+#importBtn  {
+    background: #ea580c;
+    color: white;
+}
+
+#preview  {
+    margin-top: 20px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+}
+
+.dark #preview  {
+    color: #111;
+}
+
+#stats  {
+    margin-top: 20px;
+    font-size: 18px;
+}
