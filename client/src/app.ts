@@ -1,5 +1,5 @@
 import { type Note } from "./types";
-import { addNote, notes, deleteNote, updateNote } from "./note";
+import { addNote, notes, deleteNote, updateNote, replaceNotes } from "./note";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { marked } from "marked";
@@ -23,6 +23,51 @@ const preview = document.querySelector("#preview") as HTMLDivElement;
 const stats = document.querySelector("#stats") as HTMLDivElement;
 
 let editingId: number | null = null;
+
+function escapeHTML(value: unknown): string {
+    return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+    })[character] as string);
+}
+
+function safeColor(value: unknown): string {
+    const color = String(value ?? "");
+    return /^#[0-9a-fA-F]{6}$/.test(color) ? color : "#fff59d";
+}
+
+function sanitizePreviewHTML(html: string): string {
+    const documentFragment = new DOMParser().parseFromString(html, "text/html");
+    const allowedTags = new Set([
+        "P", "BR", "STRONG", "EM", "B", "I", "H1", "H2", "H3", "H4",
+        "UL", "OL", "LI", "BLOCKQUOTE", "CODE", "PRE", "A", "HR", "DEL"
+    ]);
+
+    documentFragment.body.querySelectorAll("*").forEach((element) => {
+        if (!allowedTags.has(element.tagName)) {
+            element.replaceWith(...Array.from(element.childNodes));
+            return;
+        }
+
+        const href = element.tagName === "A" ? element.getAttribute("href") : null;
+        Array.from(element.attributes).forEach((attribute) => element.removeAttribute(attribute.name));
+
+        if (element.tagName === "A" && href && (
+            /^https?:\/\//i.test(href) ||
+            /^mailto:/i.test(href) ||
+            href.startsWith("#") ||
+            (href.startsWith("/") && !href.startsWith("//"))
+        )) {
+            element.setAttribute("href", href);
+            element.setAttribute("rel", "noopener noreferrer");
+        }
+    });
+
+    return documentFragment.body.innerHTML;
+}
 
 declare global {
     function removeNote(id: number): void;
@@ -51,15 +96,16 @@ addBtn.addEventListener("click", () => {
         };
         addNote(note);
     } else {
-        updateNote({
-            id: editingId,
-            title,
-            description,
-            createdAt: new Date().toLocaleString(),
-            pinned: false,
-            category: categoryInput.value || "Personal",
-            color: colorInput.value || "white"
-        });
+        const existingNote = notes.find(note => note.id === editingId);
+        if (existingNote) {
+            updateNote({
+                ...existingNote,
+                title,
+                description,
+                category: categoryInput.value || existingNote.category || "Personal",
+                color: safeColor(colorInput.value || existingNote.color)
+            });
+        }
         editingId = null;
         addBtn.textContent = "Add Note";
     }
@@ -72,24 +118,23 @@ addBtn.addEventListener("click", () => {
 function renderNotes() {
     const keyword = searchInput.value.toLowerCase();
     notesContainer.innerHTML = "";
-    const sorted = [...notes].sort((a,b) => Number(b.pinned)-Number(a.pinned))
-    .filter(note => note.title.toLowerCase().includes(keyword) || note.description.toLowerCase().includes(keyword));
+    const sorted = [...notes].sort((a, b) => Number(b.pinned) - Number(a.pinned))
+        .filter(note => note.title.toLowerCase().includes(keyword) || note.description.toLowerCase().includes(keyword));
+
     sorted.forEach(note => {
         notesContainer.innerHTML += `
-            <div class="card" style="background:${note.color};">
-            <h2>
-            ${note.pinned ? "📌 " : ""}
-            ${note.title}
-            </h2>
-            <p>${note.description}</p>
-            <br>
-            <small>${note.category} </small>
-            <div class="actions">
-                <button onclick="pinNote(${note.id})">Pin</button>
-                <button class="delete" onclick="removeNote(${note.id})">Delete</button>
+            <div class="card" style="background:${safeColor(note.color)};">
+                <h2>${note.pinned ? "📌 " : ""}${escapeHTML(note.title)}</h2>
+                <p>${escapeHTML(note.description)}</p>
+                <br>
+                <small>${escapeHTML(note.category)}</small>
+                <div class="actions">
+                    <button onclick="editNote(${Number(note.id)})">Edit</button>
+                    <button onclick="pinNote(${Number(note.id)})">${note.pinned ? "Unpin" : "Pin"}</button>
+                    <button class="delete" onclick="removeNote(${Number(note.id)})">Delete</button>
+                </div>
             </div>
-            </div>
-            `;
+        `;
     });
 }
 
@@ -175,9 +220,30 @@ fileInput.onchange = () => {
     const reader = new FileReader();
     reader.onload = (_e) => {
         try {
-            const imported = JSON.parse(reader.result as string);
-            localStorage.setItem("notes", JSON.stringify(imported));
-            location.reload();
+            const imported: unknown = JSON.parse(reader.result as string);
+            if (!Array.isArray(imported) || !imported.every((item: any) =>
+                item && typeof item === "object" &&
+                Number.isSafeInteger(Number(item.id)) &&
+                typeof item.title === "string" &&
+                typeof item.description === "string"
+            )) {
+                throw new Error("Invalid notes file");
+            }
+
+            const safeImported = imported.map((item: any) => ({
+                id: Number(item.id),
+                title: item.title,
+                description: item.description,
+                createdAt: typeof item.createdAt === "string" ? item.createdAt : new Date().toISOString(),
+                pinned: item.pinned === true,
+                category: typeof item.category === "string" ? item.category : "Personal",
+                color: safeColor(item.color)
+            }));
+            replaceNotes(safeImported);
+            renderNotes();
+            updateStats();
+            showToast("Notes imported successfully!");
+            fileInput.value = "";
         }
         catch (error) {
             showToast("Error importing notes.");
@@ -196,7 +262,8 @@ function updateStats() {
 }
 
 previewBtn.onclick = () => {
-    preview.innerHTML = marked(descriptionInput.value) as string;
+    const markdownHTML = marked.parse(descriptionInput.value) as string;
+    preview.innerHTML = sanitizePreviewHTML(markdownHTML);
 };
 
 pdfBtn.onclick = () => {
