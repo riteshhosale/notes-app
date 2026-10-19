@@ -53,3 +53,8 @@ export function updateNote(updated: Note) {
     notes = notes.map(note => note.id === updated.id ? updated : note);
     saveNotes();
 }
+
+export function replaceNotes(updatedNotes: Note[]) {
+    notes = updatedNotes;
+    saveNotes();
+}
