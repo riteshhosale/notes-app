@@ -1,5 +1,5 @@
 import { type Note } from "./types";
-import { addNote, notes, deleteNote, updateNote } from "./note";
+import { addNote, notes, deleteNote, updateNote, replaceNotes } from "./note";
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
 import { marked } from "marked";
@@ -239,8 +239,11 @@ fileInput.onchange = () => {
                 category: typeof item.category === "string" ? item.category : "Personal",
                 color: safeColor(item.color)
             }));
-            localStorage.setItem("notes", JSON.stringify(safeImported));
-            location.reload();
+            replaceNotes(safeImported);
+            renderNotes();
+            updateStats();
+            showToast("Notes imported successfully!");
+            fileInput.value = "";
         }
         catch (error) {
             showToast("Error importing notes.");
